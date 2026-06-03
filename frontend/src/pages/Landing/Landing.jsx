@@ -24,6 +24,7 @@ export default function Landing() {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
 
+  // Optional chaining: #how-it-works only mounts when !isAuthenticated, but the nav link renders always
   const scrollToHowItWorks = () => {
     document
       .getElementById('how-it-works')
@@ -214,6 +215,7 @@ export default function Landing() {
           </div>
         </section>
 
+        {/* #course-rag renders for both auth states — nav link and welcomeBack section both reference it */}
         <section
           className={styles.landing__rag}
           id='course-rag'
@@ -284,6 +286,7 @@ export default function Landing() {
           </div>
         </section>
 
+        {/* Marketing sections (capabilities, steps, CTA) hidden from signed-in users to reduce noise */}
         {!isAuthenticated && (
           <>
             <section className={styles.landing__capabilities}>
@@ -446,6 +449,7 @@ export default function Landing() {
           </>
         )}
 
+        {/* Replaces the marketing sections above for returning users with a direct workspace link */}
         {isAuthenticated && (
           <section className={styles.landing__welcomeBack}>
             <div className={styles.landing__sectionInner}>
