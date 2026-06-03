@@ -1,7 +1,7 @@
 # Task: Public Landing Page
 
 ## 1. Page Overview
-The Landing page is the unauthenticated home page of the application. It introduces the product, highlights its AI features, and directs users to sign up or log in.
+The Landing page is the unauthenticated home page of the application. It introduces the product, highlights its AI features, and directs users to sign up or log in.Public Landing Page
 
 - **Path**: `/frontend/src/pages/Landing/Landing.jsx`
 - **Route**: `/`
