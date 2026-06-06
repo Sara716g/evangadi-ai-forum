@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import styles from "./MyQuestions.module.css";
 import Dashboard from "../Dashboard/Dashboard";
+import axios from "axios"; 
 
 function MyQuestions() {
   const [myQuestions, setMyQuestions] = useState([]);
@@ -13,12 +15,27 @@ function MyQuestions() {
         setIsLoading(true);
         setError(null);
 
-        // Simulating a 1-second network loading lag state
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+        // Get the logged-in user's token from localStorage
+        const token = localStorage.getItem("token");
 
-        const mockData = [];
+        // Directly hitting the endpoint 
+        const response = await axios.get(
+          "http://localhost:3777/api/questions?mine=true",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`, // Sending the token so the backend knows who "mine" refers to
+            },
+          },
+        );
 
-        setMyQuestions(mockData);
+        // Safe handling of data fields depending on backend format
+        if (response.data && Array.isArray(response.data)) {
+          setMyQuestions(response.data);
+        } else if (response.data && Array.isArray(response.data.questions)) {
+          setMyQuestions(response.data.questions);
+        } else {
+          setMyQuestions([]);
+        }
       } catch (err) {
         console.error("Error loading workspace topics:", err);
         setError("Failed to fetch questions.");
@@ -42,9 +59,9 @@ function MyQuestions() {
             follow-ups. Rows use the same left accent as your threads on Home.
           </p>
         </div>
-        <button className={styles.new_question_btn}>
+        <Link to="/questions/ask" className={styles.new_question_btn}>
           <span className={styles.plus_icon}>+</span> New question
-        </button>
+        </Link>
       </div>
 
       {/* 2. Main Content Card Shell */}
@@ -67,13 +84,16 @@ function MyQuestions() {
           </div>
         )}
 
-        {/* Empty State Container */}
+        {/* Empty State Container with explicit link back to ask page */}
         {!isLoading && !error && myQuestions.length === 0 && (
           <div className={styles.state_wrapper}>
             <div className={styles.empty_box}>
               <p className={styles.empty_text}>
-                You have not asked any questions yet. Use Ask a Question in the
-                sidebar to start.
+                You have not asked any questions yet. Use{" "}
+                <Link to="/questions/ask" className={styles.inline_link}>
+                  Ask a Question
+                </Link>{" "}
+                in the sidebar to start.
               </p>
             </div>
           </div>
