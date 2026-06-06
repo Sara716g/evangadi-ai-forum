@@ -3,6 +3,7 @@ import { LayoutDashboard, LogOut, MessageSquare, FileText } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import styles from './Sidebar.module.css';
 
+
 /**
  * Primary navigation: paths must match `App.jsx` routes.
  * Add rows here when you ship new sections (e.g. Admin, Bookmarks).

@@ -24,7 +24,7 @@ app.use(errorHandler);
 // Start server
 const startServer = async () => {
   try {
-    // Test database connection
+// Test database connection
     const connection = await db.getConnection();
 
     console.log('Database connection established successfully.');
