@@ -1,31 +1,36 @@
 // backend/src/utils/ai.js
-import { GoogleGenAI } from '@google/genai';
-import dotenv from 'dotenv';
+import { GoogleGenAI } from "@google/genai";
+import dotenv from "dotenv";
 
 dotenv.config();
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const GEMINI_EMBEDDING_MODEL = process.env.GEMINI_EMBEDDING_MODEL || 'gemini-embedding-001';
-const GEMINI_TEXT_MODEL = process.env.GEMINI_TEXT_MODEL || 'gemini-2.5-flash-lite';
+
+// ✅ FIXED MODELS (IMPORTANT)
+const GEMINI_EMBEDDING_MODEL =
+  process.env.GEMINI_EMBEDDING_MODEL || "text-embedding-004";
+
+const GEMINI_TEXT_MODEL =
+  process.env.GEMINI_TEXT_MODEL || "gemini-1.5-flash-latest";
 
 // Initialize the client instance using the standard SDK
 export const aiClient = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
 
 const parsePartsText = (content) => {
   if (!content || !Array.isArray(content.parts)) {
-    return '';
+    return "";
   }
-  return content.parts.map(part => part.text || '').join('');
+  return content.parts.map((part) => part.text || "").join("");
 };
 
 export const generateEmbedding = async (text) => {
-  if (!text || typeof text !== 'string') {
-    throw new Error('Text is required for embedding generation.');
+  if (!text || typeof text !== "string") {
+    throw new Error("Text is required for embedding generation.");
   }
 
   const normalizedText = text.trim();
   if (!normalizedText) {
-    throw new Error('Text must not be empty for embedding generation.');
+    throw new Error("Text must not be empty for embedding generation.");
   }
 
   const result = await aiClient.models.embedContent({
@@ -35,15 +40,15 @@ export const generateEmbedding = async (text) => {
 
   const values = result.embeddings?.[0]?.values;
   if (!Array.isArray(values) || values.length === 0) {
-    throw new Error('Failed to generate embedding from Gemini.');
+    throw new Error("Failed to generate embedding from Gemini.");
   }
 
   return values;
 };
 
 export const generateText = async (prompt) => {
-  if (!prompt || typeof prompt !== 'string') {
-    throw new Error('Prompt is required for text generation.');
+  if (!prompt || typeof prompt !== "string") {
+    throw new Error("Prompt is required for text generation.");
   }
 
   const response = await aiClient.models.generateContent({
@@ -56,7 +61,7 @@ export const generateText = async (prompt) => {
 
   const candidate = response.candidates?.[0];
   if (!candidate?.content) {
-    throw new Error('Failed to generate text from Gemini.');
+    throw new Error("Failed to generate text from Gemini.");
   }
 
   return parsePartsText(candidate.content);
