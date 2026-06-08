@@ -1,19 +1,22 @@
-import express from 'express';
-import authRoutes from './auth/routes/auth.routes.js';
-import questionRoutes from './question/routes/question.routes.js';
-import answerRoutes from './answer/routes/answer.routes.js';
-import ragRoutes from './rag/routes/rag.routes.js';
+import express from "express";
 
-export const mainRouter = express.Router();
+import authRoutes from "./auth/routes/auth.routes.js";
+import questionRoutes from "./question/routes/question.routes.js";
+import answerRoutes from "./answer/routes/answer.routes.js";
+import ragRoutes from "./rag/routes/rag.routes.js";
 
-// Authentication routes
-mainRouter.use('/auth', authRoutes);
+import draftCoachRoutes from "./questions/routes/question.routes.js";
 
-// Question routes
-mainRouter.use('/questions', questionRoutes);
+const mainRouter = express.Router();
 
-// Answer routes
-mainRouter.use('/answers', answerRoutes);
+mainRouter.use("/auth", authRoutes);
 
-// RAG document routes
-mainRouter.use('/rag', ragRoutes);
+mainRouter.use("/questions", questionRoutes);
+
+mainRouter.use("/answers", answerRoutes);
+
+mainRouter.use("/rag", ragRoutes);
+
+mainRouter.use("/draft-coach", draftCoachRoutes);
+
+export default mainRouter;
