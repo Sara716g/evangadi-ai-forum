@@ -1,0 +1,173 @@
+/* Container spacing rules aligning with main columns */
+.workspace_container {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg, 1.5rem);
+    width: 100%;
+}
+
+/* Header Card layout matching the top structural panel */
+.header_card {
+    background-color: var(--surface, #ffffff);
+    border: 1px solid var(--border, #eceef2);
+    border-radius: var(--radius-md, 12px);
+    padding: var(--spacing-xl, 2rem);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: var(--spacing-md, 1rem);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+@media (min-width: 768px) {
+    .header_card {
+        flex-direction: row;
+        align-items: center;
+    }
+}
+
+.header_info {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs, 0.5rem);
+}
+
+.badge {
+    font-size: var(--text-xs, 0.75rem);
+    font-weight: var(--font-bold, 700);
+    color: var(--primary, #f05a28);
+    letter-spacing: 0.05em;
+}
+
+.title {
+    font-size: var(--text-2xl, 1.75rem);
+    font-weight: var(--font-bold, 700);
+    color: var(--text-primary, #1e293b);
+    margin: 0;
+}
+
+.description {
+    font-size: var(--text-sm, 0.875rem);
+    color: var(--text-secondary, #64748b);
+    line-height: 1.5;
+    max-width: 42rem;
+    margin: 0;
+}
+
+/* Action button matching core UI accent styling patterns */
+.new_question_btn {
+    background-color: var(--primary, #f05a28);
+    color: #ffffff;
+    font-size: var(--text-sm, 0.875rem);
+    font-weight: var(--font-semibold, 600);
+    border: none;
+    border-radius: var(--radius-sm, 8px);
+    padding: 0.625rem 1.25rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-xs, 0.5rem);
+    white-space: nowrap;
+    text-decoration: none;
+    transition: background-color var(--transition-base, 0.2s ease);
+}
+
+.new_question_btn:hover {
+    background-color: #d84b1d;
+}
+
+.plus_icon {
+    font-size: var(--text-base, 1rem);
+    font-weight: var(--font-bold, 700);
+}
+
+/* Central Main Application Content Window Box Container */
+.content_card {
+    background-color: var(--surface, #ffffff);
+    border: 1px solid var(--border, #eceef2);
+    border-radius: var(--radius-md, 12px);
+    min-height: 24rem;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+/* Structural Override conditional rule if actual array contents exist */
+.content_card.has_content {
+    background-color: transparent;
+    border: none;
+    box-shadow: none;
+    min-height: auto;
+}
+
+/* Inner view state center alignment layout */
+.state_wrapper {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-2xl, 3rem);
+}
+
+/* 1. Loading Elements Styling */
+.loading_text {
+    font-size: var(--text-sm, 0.875rem);
+    color: var(--text-secondary, #64748b);
+    margin: 0;
+}
+
+/* 2. Error Message Area Panels */
+.error_box {
+    background-color: #fee2e2;
+    border: 1px solid #fca5a5;
+    border-radius: var(--radius-md, 12px);
+    padding: var(--spacing-xl, 2rem) var(--spacing-2xl, 3rem);
+    width: 100%;
+    max-width: 18rem;
+    text-align: center;
+}
+
+.error_text {
+    font-size: var(--text-sm, 0.875rem);
+    color: #991b1b;
+    font-weight: var(--font-medium, 500);
+    margin: 0;
+}
+
+/* 3. Empty State Elements Styling Box Layout */
+.empty_box {
+    background-color: #f8fafc;
+    border: 1px dashed #cbd5e1;
+    border-radius: var(--radius-md, 12px);
+    padding: var(--spacing-2xl, 3rem) var(--spacing-xl, 2rem);
+    width: 100%;
+    max-width: 24rem;
+    text-align: center;
+}
+
+.empty_text {
+    font-size: var(--text-sm, 0.875rem);
+    color: #334155;
+    line-height: 1.6;
+    margin: 0;
+}
+
+/* Styled inline routing hyperlink meeting requirement 4.3 */
+.inline_link {
+    color: var(--primary, #f05a28);
+    text-decoration: none;
+    font-weight: var(--font-medium, 500);
+}
+
+.inline_link:hover {
+    text-decoration: underline;
+}
+
+/* 4. Populated List Wrapper Container Panel */
+.questions_feed {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md, 1rem);
+    width: 100%;
+}
