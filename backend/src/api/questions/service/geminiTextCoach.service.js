@@ -1,14 +1,10 @@
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const ai = new GoogleGenAI({
-  apiKey: process.env.GEMINI_API_KEY,
-});
+const genai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-export const generateQuestionDraftCoachService = async ({
-  title,
-  content,
-}) => {
-  const prompt = `
+export const generateQuestionDraftCoachService = async ({ title, content }) => {
+  try {
+    const prompt = `
 You are a senior programming forum expert.
 
 Your task is to review a question draft and give improvement tips.
@@ -19,25 +15,29 @@ Rules:
 - Only give improvement suggestions
 
 Title:
-${title || 'No title'}
+${title || "No title"}
 
 Content:
-${content || 'No content'}
+${content || "No content"}
 
 Return ONLY 3–5 short bullet-point tips.
 `;
 
-  const response = await ai.models.generateContent({
-    model: process.env.GEMINI_TEXT_MODEL || 'gemini-2.5-flash-lite',
-    contents: prompt,
-  });
+    const model = genai.getGenerativeModel({
+      model: "gemini-1.5-flash",
+    });
 
-  const text = response.text; // ✅ correct usage
+    const result = await model.generateContent(prompt);
+    const text = result.response.text();
 
-  const tips = text
-    .split('\n')
-    .map(t => t.replace(/^[-*•]\s*/, '').trim())
-    .filter(t => t.length > 0);
+    const tips = text
+      .split("\n")
+      .map((t) => t.replace(/^[-*•]\s*/, "").trim())
+      .filter((t) => t.length > 0);
 
-  return { tips };
+    return { tips };
+  } catch (error) {
+    console.error("Draft coach error:", error.message);
+    throw error;
+  }
 };
