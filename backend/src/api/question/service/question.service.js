@@ -1,44 +1,29 @@
 import { safeExecute } from "../../../../db/config.js";
+import { embedSearchQuery } from "../../../utils/gemini/embedding.service.js";
+import {
+  parseEmbedding,
+  cosineSimilarity,
+  rankVectorsBySimilarity,
+} from "../../../utils/vector/vector.utils.js";
 
-const buildQuestionFilters = (filters) => {
-  const conditions = [];
-  const params = [];
+const DEFAULT_K = Number.parseInt(process.env.RECOMMEND_K, 10) || 5;
+const DEFAULT_THRESHOLD =
+  Number.parseFloat(process.env.RECOMMEND_THRESHOLD) || 0.75;
 
-  if (filters.search) {
-    conditions.push("(q.title LIKE ? OR q.content LIKE ?)");
-    const searchTerm = `%${filters.search}%`;
-    params.push(searchTerm, searchTerm);
-  }
-
-  if (filters.mine && filters.userId) {
-    conditions.push("q.user_id = ?");
-    params.push(filters.userId);
-  }
-
-  if (conditions.length === 0) {
-    return { whereClause: "", params };
-  }
-
-  return {
-    whereClause: `WHERE ${conditions.join(" AND ")}`,
-    params,
-  };
+const fetchAllReadyVectors = async (excludeQuestionId = null) => {
+  const sql =
+    excludeQuestionId === null
+      ? `SELECT question_id, embedding FROM question_vectors WHERE status = 'ready'`
+      : `SELECT question_id, embedding FROM question_vectors WHERE status = 'ready' AND question_id != ?`;
+  const params = excludeQuestionId === null ? [] : [excludeQuestionId];
+  return safeExecute(sql, params);
 };
 
-/**
- * Fetches a list of questions with their authors and answer counts.
- *
- * @param {object} filters - Optional filter criteria (e.g. userId, search term).
- * @returns {Promise<{data: Array, meta: object}>} An object containing the list of questions and metadata.
- */
-export const getQuestionsService = async (filters) => {
-  const normalizedLimit = 100;
-  const sortColumn = "q.created_at";
-  const normalizedSortOrder = "DESC";
-
-  const { whereClause, params } = buildQuestionFilters(filters);
-
-  const listSql = `
+const hydrateQuestionsByIds = async (rankedMatches, scoreByQuestionId) => {
+  if (rankedMatches.length === 0) return [];
+  const questionIds = rankedMatches.map((match) => match.questionId);
+  const placeholders = questionIds.map(() => "?").join(", ");
+  const sql = `
     SELECT
       q.question_id AS id,
       q.question_hash AS questionHash,
@@ -46,41 +31,58 @@ export const getQuestionsService = async (filters) => {
       q.content,
       q.created_at AS createdAt,
       q.updated_at AS updatedAt,
-      u.user_id AS userId,
-      u.first_name AS firstName,
-      u.last_name AS lastName,
-      COUNT(DISTINCT a.answer_id) AS answerCount
+      u.user_id AS authorId,
+      u.first_name AS authorFirstName,
+      u.last_name AS authorLastName,
+      COUNT(a.answer_id) AS answerCount
     FROM questions q
-    JOIN users u ON u.user_id = q.user_id
-    LEFT JOIN answers a ON a.question_id = q.question_id
-    ${whereClause}
-    GROUP BY q.question_id, u.user_id
-    ORDER BY ${sortColumn} ${normalizedSortOrder}
-    LIMIT ${normalizedLimit}
+    INNER JOIN users u ON q.user_id = u.user_id
+    LEFT JOIN answers a ON q.question_id = a.question_id
+    WHERE q.question_id IN (${placeholders})
+    GROUP BY q.question_id, q.question_hash, q.title, q.content, q.created_at, q.updated_at, u.user_id, u.first_name, u.last_name
   `;
+  const rows = await safeExecute(sql, questionIds);
+  const rowById = new Map(rows.map((row) => [row.id, row]));
+  return rankedMatches
+    .map((match) => {
+      const row = rowById.get(match.questionId);
+      if (!row) return null;
+      return {
+        id: row.id,
+        questionHash: row.questionHash,
+        title: row.title,
+        content: row.content,
+        answerCount: Number(row.answerCount),
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt,
+        author: {
+          id: row.authorId,
+          firstName: row.authorFirstName,
+          lastName: row.authorLastName,
+        },
+        score: scoreByQuestionId.get(match.questionId),
+      };
+    })
+    .filter(Boolean);
+};
 
-  const rows = await safeExecute(listSql, params);
-
+export const searchQuestionsSemanticService = async ({
+  query,
+  k = DEFAULT_K,
+  threshold = DEFAULT_THRESHOLD,
+}) => {
+  const queryVector = await embedSearchQuery(query);
+  const vectorRows = await fetchAllReadyVectors();
+  const scoredMatches = rankVectorsBySimilarity(queryVector, vectorRows, {
+    k,
+    threshold,
+  });
+  const scoreByQuestionId = new Map(
+    scoredMatches.map((match) => [match.questionId, match.score]),
+  );
+  const data = await hydrateQuestionsByIds(scoredMatches, scoreByQuestionId);
   return {
-    data: rows.map((question) => ({
-      id: question.id,
-      questionHash: question.questionHash,
-      title: question.title,
-      content: question.content,
-      answerCount: question.answerCount,
-      createdAt: question.createdAt,
-      updatedAt: question.updatedAt,
-      author: {
-        id: question.userId,
-        firstName: question.firstName,
-        lastName: question.lastName,
-      },
-    })),
-    meta: {
-      limit: normalizedLimit,
-      total: rows.length,
-      sortBy: "newest",
-      sortOrder: normalizedSortOrder,
-    },
+    data,
+    meta: { total: data.length, k, threshold, query, questionHash: null },
   };
 };
