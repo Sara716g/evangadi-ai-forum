@@ -13,6 +13,7 @@
     "test:ui": "vitest --ui"
   },
   "dependencies": {
+    "@google/genai": "^2.8.0",
     "axios": "^1.15.0",
     "framer-motion": "^12.38.0",
     "lucide-react": "^1.8.0",
