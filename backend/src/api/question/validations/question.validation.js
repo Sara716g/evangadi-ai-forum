@@ -28,4 +28,4 @@ export const searchQuestionsSemanticValidation = [
   optionalThresholdValidation,
   validationErrorHandler,
 ];
-```
+

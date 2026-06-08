@@ -5,11 +5,26 @@ import { searchQuestionsSemanticValidation } from "../validations/question.valid
 
 const router = express.Router();
 
+// router.get(
+//   "/search",
+//   authenticateUser,
+//   searchQuestionsSemanticValidation,
+//   searchQuestionsSemanticController,
+// );
+
+/**
+ * @route GET /api/questions/search
+ * @desc Semantic search for questions using vector embeddings based on a text query
+ * @access Private
+ */
 router.get(
-  "/search",
+  '/search',
   authenticateUser,
   searchQuestionsSemanticValidation,
   searchQuestionsSemanticController,
 );
+
+
+
 
 export default router;
