@@ -1,10 +1,16 @@
 import express from "express";
 
 // Controllers
-import { getQuestionsController } from "../controller/question.controller.js";
+import {
+  getQuestionsController,
+  getSingleQuestionController,
+} from "../controller/question.controller.js";
 
 // Middleware
-import { getQuestionsValidation } from "../validations/question.validation.js";
+import {
+  getQuestionsValidation,
+  getSingleQuestionValidation,
+} from "../validations/question.validation.js";
 
 import { authenticateUser } from "../../../middleware/authentication.js";
 
@@ -22,6 +28,18 @@ router.get(
   authenticateUser,
   getQuestionsValidation,
   getQuestionsController,
+);
+
+/**
+ * @route GET /api/questions/:questionHash
+ * @desc Get one question with answers
+ * @access Private
+ */
+router.get(
+  "/:questionHash",
+  authenticateUser,
+  getSingleQuestionValidation,
+  getSingleQuestionController,
 );
 
 export default router;
