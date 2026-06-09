@@ -9,20 +9,22 @@ import { errorHandler } from "./src/middleware/error-handler.js";
 const app = express();
 const port = process.env.PORT || 3777;
 
-// Middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Health check
+app.get("/", (req, res) => {
+  res.send(
+    "Welcome to the Evangadi AI Forum Backend! Server is running smoothly.",
+  );
+});
+
 app.get("/health", (req, res) => {
   res.json({ status: "ok", timestamp: new Date() });
 });
 
-// API routes
 app.use("/api", mainRouter);
 
-// Error handler
 app.use(errorHandler);
 
 const startServer = async () => {
