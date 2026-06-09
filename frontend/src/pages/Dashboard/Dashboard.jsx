@@ -1,25 +1,3 @@
-/**
- * Dashboard: default home after login; question list, quick actions, URL-driven search.
- * Data: `questionService` (keyword `q`, semantic `semantic`, or full list).
- */
-
-// import { useAuth } from '../../contexts/AuthContext';
-
-// export default function Dashboard() {
-//   const { user } = useAuth();
-
-//   const firstName = user?.firstName?.trim();
-//   const welcomeLine = firstName
-//     ? `Good to see you, ${firstName}.`
-//     : 'Welcome to the forum.';
-
-//   return (
-//     <div>
-//       <h3>{welcomeLine}</h3>
-//     </div>
-//   );
-// }
-
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useAuth } from "../../contexts/AuthContext";
@@ -36,7 +14,7 @@ export default function Dashboard() {
     : "Welcome to the forum.";
 
   // -----------------------------
-  // STATE (added)
+  // STATE
   // -----------------------------
   const [questions, setQuestions] = useState([]);
   const [query, setQuery] = useState("");
@@ -44,7 +22,7 @@ export default function Dashboard() {
   const [error, setError] = useState(null);
 
   // -----------------------------
-  // FETCH QUESTIONS (default load)
+  // FETCH QUESTIONS
   // -----------------------------
   const fetchQuestions = async () => {
     try {
@@ -53,9 +31,13 @@ export default function Dashboard() {
 
       const res = await axios.get("/api/questions");
 
-      setQuestions(res.data);
+      console.log("Questions API:", res.data);
+
+      setQuestions(Array.isArray(res.data?.data) ? res.data.data : []);
     } catch (err) {
+      console.error(err);
       setError("Failed to load questions");
+      setQuestions([]);
     } finally {
       setLoading(false);
     }
@@ -66,7 +48,7 @@ export default function Dashboard() {
   }, []);
 
   // -----------------------------
-  // SEARCH (keyword mode for now)
+  // SEARCH
   // -----------------------------
   const handleSearch = async () => {
     try {
@@ -77,27 +59,38 @@ export default function Dashboard() {
         params: { search: query },
       });
 
-      setQuestions(res.data);
+      console.log("Search API:", res.data);
+
+      setQuestions(Array.isArray(res.data?.data) ? res.data.data : []);
     } catch (err) {
+      console.error(err);
       setError("Search failed");
+      setQuestions([]);
     } finally {
       setLoading(false);
     }
   };
 
   // -----------------------------
-  // STATS CALCULATION
+  // SAFE DATA
   // -----------------------------
-  const totalQuestions = questions.length;
+  const safeQuestions = Array.isArray(questions) ? questions : [];
 
-  const totalReplies = questions.reduce(
+  // -----------------------------
+  // STATS
+  // -----------------------------
+  const totalQuestions = safeQuestions.length;
+
+  const totalReplies = safeQuestions.reduce(
     (sum, q) => sum + (q.answerCount || 0),
     0,
   );
 
-  const unanswered = questions.filter((q) => (q.answerCount || 0) === 0).length;
+  const unanswered = safeQuestions.filter(
+    (q) => (q.answerCount || 0) === 0,
+  ).length;
 
-  const yours = questions.filter((q) => q.authorId === user?.id).length;
+  const yours = safeQuestions.filter((q) => q.author?.id === user?.id).length;
 
   return (
     <div className={styles.contentBody}>
@@ -113,7 +106,7 @@ export default function Dashboard() {
         </p>
       </section>
 
-      {/* 🔍 SEARCH BAR */}
+      {/* SEARCH */}
       <div className={styles.searchBox}>
         <input
           value={query}
@@ -132,8 +125,9 @@ export default function Dashboard() {
           <div className={`${styles.cardIcon} ${styles.iconOrange}`}>
             <i className="fa-regular fa-pen-to-square"></i>
           </div>
+
           <div className={styles.cardText}>
-            <h3>New question</h3>
+            <h3>New Question</h3>
             <p>Share context, errors, and what you already tried</p>
           </div>
         </div>
@@ -142,8 +136,9 @@ export default function Dashboard() {
           <div className={`${styles.cardIcon} ${styles.iconYellow}`}>
             <i className="fa-solid fa-bars-staggered"></i>
           </div>
+
           <div className={styles.cardText}>
-            <h3>Your topics</h3>
+            <h3>Your Topics</h3>
             <p>Filtered list of threads you authored</p>
           </div>
         </div>
@@ -152,8 +147,9 @@ export default function Dashboard() {
           <div className={`${styles.cardIcon} ${styles.iconBlue}`}>
             <i className="fa-regular fa-bookmark"></i>
           </div>
+
           <div className={styles.cardText}>
-            <h3>Knowledge base</h3>
+            <h3>Knowledge Base</h3>
             <p>
               Course library, uploads, and retrieval-backed context for threads
             </p>
@@ -167,7 +163,7 @@ export default function Dashboard() {
         the API).
       </p>
 
-      {/* STATS COUNTERS*/}
+      {/* STATS */}
       <div className={styles.statsGrid}>
         <div className={styles.statBox}>
           <span className={styles.statLabel}>Questions</span>
@@ -194,28 +190,36 @@ export default function Dashboard() {
       <div className={styles.discussionFeedContainer}>
         <div className={styles.feedHeader}>
           <div>
-            <h3>Discussion feed</h3>
+            <h3>Discussion Feed</h3>
             <p>Your threads use a slim left accent in this list</p>
           </div>
 
           <span className={styles.badgeOrange}>NEWEST THREADS</span>
         </div>
 
-        {/* LOADING / ERROR */}
         {loading && <p>Loading questions...</p>}
+
         {error && <p style={{ color: "red" }}>{error}</p>}
 
-        {/* FEED */}
-        {!loading && questions.length === 0 ? (
+        {!loading && safeQuestions.length === 0 ? (
           <div className={styles.feedEmptyState}>
             <p>No questions found. Be the first to ask!</p>
           </div>
         ) : (
           <div className={styles.feedList}>
-            {questions.map((q) => (
+            {safeQuestions.map((q) => (
               <div key={q.questionHash || q.id} className={styles.feedItem}>
                 <h4>{q.title}</h4>
-                <p>{q.body?.slice(0, 120)}...</p>
+
+                <p>
+                  {q.content
+                    ? `${q.content.slice(0, 120)}${
+                        q.content.length > 120 ? "..." : ""
+                      }`
+                    : "No content available"}
+                </p>
+
+                <small>Replies: {q.answerCount || 0}</small>
               </div>
             ))}
           </div>
