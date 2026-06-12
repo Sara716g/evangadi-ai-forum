@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import styles from "./MyQuestions.module.css";
-import Dashboard from "../Dashboard/Dashboard";
-import axios from "axios"; 
+import dashboardStyles from "../Dashboard/Dashboard.module.css"; // Reuse dashboard item styles directly
+import axios from "axios";
+import { useAuth } from "../../contexts/AuthContext"; // Import auth context for ownership badge logic
 
 function MyQuestions() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const [myQuestions, setMyQuestions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -18,7 +21,7 @@ function MyQuestions() {
         // Get the logged-in user's token from localStorage
         const token = localStorage.getItem("token");
 
-        // Directly hitting the endpoint 
+        // Hitting the endpoint
         const response = await axios.get(
           "http://localhost:3777/api/questions?mine=true",
           {
@@ -27,9 +30,12 @@ function MyQuestions() {
             },
           },
         );
+        console.log("Backend Raw Response Data:", response.data);
 
         // Safe handling of data fields depending on backend format
-        if (response.data && Array.isArray(response.data)) {
+        if (response.data && Array.isArray(response.data.data)) {
+          setMyQuestions(response.data.data);
+        } else if (response.data && Array.isArray(response.data)) {
           setMyQuestions(response.data);
         } else if (response.data && Array.isArray(response.data.questions)) {
           setMyQuestions(response.data.questions);
@@ -46,6 +52,21 @@ function MyQuestions() {
 
     fetchMyQuestions();
   }, []);
+
+  // Local helper utilities mirrored from your Dashboard layout logic
+  const renderSnippet = (text) => {
+    if (!text) return "No content available";
+    return text.length > 160 ? `${text.substring(0, 160)}...` : text;
+  };
+
+  const getInitials = (author, fallbackUsername) => {
+    if (author?.firstName && author?.lastName) {
+      return `${author.firstName[0]}${author.lastName[0]}`.toUpperCase();
+    }
+    const name =
+      fallbackUsername || author?.username || author?.firstName || "NU";
+    return name.substring(0, 2).toUpperCase();
+  };
 
   return (
     <div className={styles.workspace_container}>
@@ -102,12 +123,66 @@ function MyQuestions() {
         {/* Populated List State Container */}
         {!isLoading && !error && myQuestions.length > 0 && (
           <div className={styles.questions_feed}>
-            {myQuestions.map((question) => (
-              <Dashboard
-                key={question.question_id || question.id}
-                question={question}
-              />
-            ))}
+            {myQuestions.map((q) => {
+              const isUserOwnedThread =
+                q.author?.id === user?.id || q.isUserOwned;
+
+              return (
+                <div
+                  key={q.questionHash || q.id}
+                  className={`${dashboardStyles.feedItemCardRow} ${
+                    isUserOwnedThread
+                      ? dashboardStyles.feedItemCardUserOwned
+                      : dashboardStyles.rowCardStandardHover
+                  }`}
+                  onClick={() =>
+                    navigate(`/question/${q.questionHash || q.id}`)
+                  }
+                >
+                  {/* Circle Avatar initials */}
+                  <div
+                    className={`${dashboardStyles.avatar} ${
+                      isUserOwnedThread
+                        ? dashboardStyles.feedAvatarBlue
+                        : dashboardStyles.feedAvatarGreen
+                    }`}
+                  >
+                    {getInitials(q.author, q.authorUsername)}
+                  </div>
+
+                  {/* Primary Text Segments */}
+                  <div className={dashboardStyles.feedItemTextContentColumn}>
+                    <div className={dashboardStyles.feedItemHeadlineFlexRow}>
+                      <h4>{q.title}</h4>
+                      {isUserOwnedThread && (
+                        <span className={dashboardStyles.yoursInlineFlagBadge}>
+                          Yours
+                        </span>
+                      )}
+                    </div>
+
+                    <p className={dashboardStyles.feedItemTruncatedDescription}>
+                      {renderSnippet(q.content || q.description)}
+                    </p>
+
+                    {/* Sub Badges metadata line */}
+                    <div className={dashboardStyles.feedItemMetricsFooterRow}>
+                      <span
+                        className={dashboardStyles.feedItemFooterMetricItem}
+                      >
+                        <i className="fa-regular fa-comment"></i>{" "}
+                        {q.answerCount || 0} replies
+                      </span>
+                      <span>•</span>
+                      <span>
+                        {q.timeAgo ||
+                          `Asked by ${q.author?.username || "anonymous"}`}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
