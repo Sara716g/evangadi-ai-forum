@@ -1,11 +1,20 @@
-import express from 'express';
-import authRoutes from './auth/routes/auth.routes.js';
-import questionRoutes from './question/routes/question.routes.js';
+import express from "express";
 
-export const mainRouter = express.Router();
+import authRoutes from "./auth/routes/auth.routes.js";
+import questionRoutes from "./question/routes/question.routes.js";
+import answerRoutes from "./answer/routes/answer.routes.js";
+import ragRoutes from "./rag/routes/rag.routes.js";
+import answerFitRoutes from "./questions/routes/answer-fit.routes.js";
 
-// Authentication routes
-mainRouter.use('/auth', authRoutes);
+const mainRouter = express.Router();
 
-// Question routes
-mainRouter.use('/questions', questionRoutes);
+mainRouter.use("/auth", authRoutes);
+mainRouter.use("/questions", questionRoutes);
+
+// Task 18 route
+mainRouter.use("/questions", answerFitRoutes);
+
+mainRouter.use("/answers", answerRoutes);
+mainRouter.use("/rag", ragRoutes);
+
+export default mainRouter;

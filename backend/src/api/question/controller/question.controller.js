@@ -1,29 +1,54 @@
 import { StatusCodes } from "http-status-codes";
-import { getQuestionsService } from "../service/question.service.js";
+
+// Services
+import {
+  createQuestionWithVectorService,
+  getSimilarQuestionsService,
+} from "../service/question.service.js";
 
 /**
- * Handles listing questions with optional search filtering. Max 100 records.
- *
- * @param {import('express').Request} req - The Express request object.
- * @param {import('express').Response} res - The Express response object.
- * @param {import('express').NextFunction} next - The Express next function.
- * @returns {Promise<void>}
+ * @desc Create a new question + generate vector embedding
  */
-
-export const getQuestionsController = async (req, res, next) => {
+export const createQuestionController = async (req, res, next) => {
   try {
-    const filters = {
-      search: req.query.search,
-      mine: req.query.mine,
-      userId: req.user.id, // Pass the authenticated user's ID
-    };
+    const { title, content } = req.body;
+    const userId = req.user.id;
 
-    const result = await getQuestionsService(filters);
+    const newQuestion = await createQuestionWithVectorService({
+      title,
+      content,
+      userId,
+    });
+
+    res.status(StatusCodes.CREATED).json({
+      success: true,
+      message: "Question posted successfully.",
+      data: newQuestion,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc Get similar questions using embeddings/vector similarity
+ */
+export const getSimilarQuestionsController = async (req, res, next) => {
+  try {
+    const { questionHash } = req.params;
+    const { k, threshold } = req.query;
+
+    const { data, meta } = await getSimilarQuestionsService({
+      questionHash,
+      ...(k !== undefined ? { k: Number(k) } : {}),
+      ...(threshold !== undefined ? { threshold: Number(threshold) } : {}),
+    });
 
     res.status(StatusCodes.OK).json({
       success: true,
-      message: "Questions fetched successfully.",
-      ...result,
+      message: "Similar questions fetched successfully",
+      data,
+      meta,
     });
   } catch (error) {
     next(error);

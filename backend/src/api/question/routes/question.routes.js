@@ -1,27 +1,42 @@
 import express from "express";
+import { authenticateUser } from "../../../middleware/authentication.js";
 
 // Controllers
-import { getQuestionsController } from "../controller/question.controller.js";
+import {
+  createQuestionController,
+  getSimilarQuestionsController,
+} from "../controller/question.controller.js";
 
-// Middleware
-import { getQuestionsValidation } from "../validations/question.validation.js";
-
-import { authenticateUser } from "../../../middleware/authentication.js";
+// Validations
+import {
+  createQuestionValidation,
+  getSimilarQuestionsValidation,
+} from "../validations/question.validation.js";
 
 const router = express.Router();
 
 /**
- * @route   GET /api/questions
- * @desc    Get all questions; supports optional filtering
- * @query   {string}  [search] - Filter questions by title or content (SQL LIKE)
- * @query   {boolean} [mine]   - When true, return only the authenticated user's questions
- * @access  Private
+ * @route  POST /api/questions
+ * @desc   Create a new question and generate a vector embedding
+ * @access Protected
  */
-router.get(
+router.post(
   "/",
   authenticateUser,
-  getQuestionsValidation,
-  getQuestionsController,
+  createQuestionValidation,
+  createQuestionController,
+);
+
+/**
+ * @route  GET /api/questions/:questionHash/similar
+ * @desc   Get AI-based similar questions using embeddings/vector search
+ * @access Protected
+ */
+router.get(
+  "/:questionHash/similar",
+  authenticateUser,
+  getSimilarQuestionsValidation,
+  getSimilarQuestionsController,
 );
 
 export default router;
